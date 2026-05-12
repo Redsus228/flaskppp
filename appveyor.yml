@@ -5,9 +5,9 @@ install:
   - pip3 install flask gunicorn requests
 
 before_test:
-  - cd flaskapp
+
   - chmod +x st.sh
 
 test_script:
-  - cd flaskapp
+
   - ./st.sh
