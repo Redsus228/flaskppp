@@ -75,27 +75,36 @@ def net():
 
     return render_template('net.html', form=form, image_name=filename, neurodic=neurodic)
 
-@app.route("/apinet",methods=['GET', 'POST'])
+@app.route("/apinet", methods=['GET', 'POST'])
 def apinet():
+    if request.mimetype != 'application/json':
+        return Response("Bad request: need JSON", status=400)
+
+    data = request.get_json()
+    if 'imagebin' not in data:
+        return Response("Missing 'imagebin' field", status=400)
+
+    filebytes = data['imagebin'].encode('utf-8')
+    cfile = base64.b64decode(filebytes)
+    img = Image.open(BytesIO(cfile))
+
+    decode = neuronet.getresult([img])
     neurodic = {}
-    # проверяем, что в запросе json данные
-    if request.mimetype == 'application/json':
-        # получаем json данные
-        data = request.get_json()
-        # берем содержимое по ключу, где хранится файл
-        # закодированный строкой base64
-        # декодируем строку в массив байт, используя кодировку utf-8
-        # первые 128 байт ascii и utf-8 совпадают, потому можно
-        filebytes = data['imagebin'].encode('utf-8')
-        # декодируем массив байт base64 в исходный файл изображение
-        cfile = base64.b64decode(filebytes)
-        # чтобы считать изображение как файл из памяти, используем BytesIO
-        img = Image.open(BytesIO(cfile))
-        decode = neuronet.getresult([img])
-        neurodic = {}
-        for elem in decode:
-            neurodic[elem[0][1]] = str(elem[0][2])
-            print(elem)
+
+    if decode and len(decode) > 0:
+        predictions = decode[0]          # предсказания для первого (и единственного) изображения
+        if isinstance(predictions, list):
+            for pred in predictions:
+                if isinstance(pred, (tuple, list)) and len(pred) >= 3:
+                    # формат (class_id, class_name, prob)
+                    neurodic[pred[1]] = str(pred[2])
+                elif isinstance(pred, dict) and 'class' in pred and 'prob' in pred:
+                    neurodic[pred['class']] = str(pred['prob'])
+        elif isinstance(predictions, dict):
+            neurodic[predictions['class']] = str(predictions['prob'])
+
+    ret = json.dumps(neurodic)
+    return Response(response=ret, status=200, mimetype="application/json")
 # пример сохранения переданного файла
 # handle = open('./static/f.png','wb')
 # handle.write(cfile)
