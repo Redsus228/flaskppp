@@ -1,8 +1,8 @@
 image: ubuntu
 language: python
 build:
-  script:
-    - echo "Nothing to build, running tests..."
+ script:
+  - echo "Nothing to build, running tests..."
 before_install:
   - chmod +x ./flaskapp/st.sh
 install:
