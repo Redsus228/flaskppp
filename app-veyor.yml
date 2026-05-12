@@ -1,4 +1,5 @@
 language: python
+build: off
 before_install:
   - chmod +x ./flaskapp/st.sh
 install:
