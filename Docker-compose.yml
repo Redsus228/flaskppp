@@ -1,8 +1,0 @@
-flaskapp:
-  image: flaskapp
-  links:
-  environment:
-  ports:
-    -
-  volumes:
-    -
