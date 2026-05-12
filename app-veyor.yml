@@ -1,5 +1,7 @@
 language: python
-build: off
+build:
+  script:
+    - echo "Nothing to build, running tests..."
 before_install:
   - chmod +x ./flaskapp/st.sh
 install:
