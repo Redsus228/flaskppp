@@ -1,7 +1,6 @@
 image: ubuntu
 build: off
-before_install:
-  - chmod +x st.sh
+
 install:
   - pip3 install flask gunicorn requests
   - pip3 install flask-bootstrap
