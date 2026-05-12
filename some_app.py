@@ -100,21 +100,18 @@ def apinet():
                     neurodic[pred[1]] = str(pred[2])
                 elif isinstance(pred, dict) and 'class' in pred and 'prob' in pred:
                     neurodic[pred['class']] = str(pred['prob'])
-        elif isinstance(predictions, dict):
-            neurodic[predictions['class']] = str(predictions['prob'])
-
-    ret = json.dumps(neurodic)
-    return Response(response=ret, status=200, mimetype="application/json")
+                elif isinstance(predictions, dict):
+                    neurodic[predictions['class']] = str(predictions['prob'])
 # пример сохранения переданного файла
 # handle = open('./static/f.png','wb')
 # handle.write(cfile)
 # handle.close()
 # преобразуем словарь в json-строку
-            ret = json.dumps(neurodic)
+    ret = json.dumps(neurodic)
 # готовим ответ пользователю
-            resp = Response(response=ret, status=200, mimetype="application/json")
+    resp = Response(response=ret, status=200, mimetype="application/json")
 # возвращаем ответ
-            return resp
+    return resp
 
 
 
