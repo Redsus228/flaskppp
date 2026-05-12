@@ -1,6 +1,7 @@
 image: ubuntu
 build: off
-
+before_install:
+  - chmod +x ./flaskapp/st.sh
 install:
   - pip3 install flask gunicorn requests
   - pip3 install flask-bootstrap
@@ -8,10 +9,6 @@ install:
   - pip3 install pillow
   - pip3 install tensorflow
   - pip3 install keras
-before_test:
 
-  - chmod +x st.sh
-
-test_script:
-
+script:
   - ./st.sh

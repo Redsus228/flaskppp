@@ -1,8 +1,10 @@
 flask
-gunicorn
-requests
-flask-bootstrap
 flask-wtf
-pillow
+flask-bootstrap
+Pillow
 tensorflow
 keras
+requests
+gunicorn
+wtforms
+werkzeug

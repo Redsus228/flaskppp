@@ -1,10 +1,24 @@
-print("Hello world") 
 from flask import Flask
 from flask import render_template
+from flask_wtf import FlaskForm,RecaptchaField
+from wtforms import StringField, SubmitField, TextAreaField
+from wtforms.validators import DataRequired
+from flask_wtf.file import FileField, FileAllowed, FileRequired
 from config import BASE_URL
 import requests
-app = Flask(__name__) 
+from flask_bootstrap import Bootstrap
+import net as neuronet
+from werkzeug.utils import secure_filename
+import os
+import base64
+from PIL import Image
+from io import BytesIO
+import json
+from flask import request
+from flask import Response
 
+app = Flask(__name__)
+print("Hello world")
 @app.route("/data_to")
 def data_to():
     some_pars = {'user':'Ivan','color':'red'}
@@ -15,6 +29,83 @@ def data_to():
 def hello(): 
     return " <html><head></head> <body> Hello World! </body></html>"
 
+SECRET_KEY = 'secret'
+app.config['SECRET_KEY'] = SECRET_KEY
+
+# используем капчу и полученные секретные ключи с сайта Google
+app.config['RECAPTCHA_USE_SSL'] = False
+app.config['RECAPTCHA_PUBLIC_KEY'] = '6LcTseUsAAAAAD69w9dnTpVq3UI4RjS9MczMr7Bg'
+app.config['RECAPTCHA_PRIVATE_KEY'] = '6LcTseUsAAAAAJDYYlZP1jaBjBJ7wbRMYUE6Erzc'
+app.config['RECAPTCHA_OPTIONS'] = {'theme': 'white'}
+bootstrap = Bootstrap(app)
+
+openid = StringField('openid', validators = [DataRequired()])
+# поле загрузки файла
+# здесь валидатор укажет ввести правильные файлы
+upload = FileField('Load image', validators=[FileRequired(),FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')])
+# поле формы с capture
+recaptcha = RecaptchaField()
+#кнопка submit, для пользователя отображена как send
+submit = SubmitField('send')
+
+class NetForm(FlaskForm):
+    openid = StringField('openid', validators=[DataRequired()])
+    upload = FileField('Load image', validators=[
+        FileRequired(),
+        FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')
+    ])
+    submit = SubmitField('send')
+
+
+@app.route("/net", methods=['GET', 'POST'])
+def net():
+    form = NetForm()
+    filename = None
+    neurodic = {}
+
+    if form.validate_on_submit():
+        filename = os.path.join('./static', secure_filename(form.upload.data.filename))
+        form.upload.data.save(filename)
+        fcount, fimage = neuronet.read_image_files(10, './static')
+        decode = neuronet.getresult(fimage)
+
+        if decode and len(decode) > 0:
+            for item in decode[0]:  # decode[0] – список предсказаний для первого изображения
+                neurodic[item['class']] = item['prob']
+
+    return render_template('net.html', form=form, image_name=filename, neurodic=neurodic)
+
+@app.route("/apinet",methods=['GET', 'POST'])
+def apinet():
+    neurodic = {}
+    # проверяем, что в запросе json данные
+    if request.mimetype == 'application/json':
+        # получаем json данные
+        data = request.get_json()
+        # берем содержимое по ключу, где хранится файл
+        # закодированный строкой base64
+        # декодируем строку в массив байт, используя кодировку utf-8
+        # первые 128 байт ascii и utf-8 совпадают, потому можно
+        filebytes = data['imagebin'].encode('utf-8')
+        # декодируем массив байт base64 в исходный файл изображение
+        cfile = base64.b64decode(filebytes)
+        # чтобы считать изображение как файл из памяти, используем BytesIO
+        img = Image.open(BytesIO(cfile))
+        decode = neuronet.getresult([img])
+        neurodic = {}
+        for elem in decode:
+            neurodic[elem[0][1]] = str(elem[0][2])
+            print(elem)
+# пример сохранения переданного файла
+# handle = open('./static/f.png','wb')
+# handle.write(cfile)
+# handle.close()
+# преобразуем словарь в json-строку
+            ret = json.dumps(neurodic)
+# готовим ответ пользователю
+            resp = Response(response=ret, status=200, mimetype="application/json")
+# возвращаем ответ
+            return resp
 
 
 

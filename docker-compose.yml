@@ -4,10 +4,10 @@ version: '3.8'
 services:
   web:
     environment:
-      BASE_URL==http://web:5000
+      - BASE_URL=http://web:5000
     build: .
     container_name: flask_app
     ports:
       - "8080:5000"
     volumes:
-       - .:/app
+      - .:/app
