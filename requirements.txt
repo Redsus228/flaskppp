@@ -1,0 +1,10 @@
+flask
+flask-wtf
+flask-bootstrap
+Pillow
+tensorflow
+keras
+requests
+gunicorn
+wtforms
+werkzeug
