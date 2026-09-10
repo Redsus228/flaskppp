@@ -1,10 +1,8 @@
 image: ubuntu
 build: off
 install:
-  - pip3 install flask gunicorn requests
-  - pip3 install flask-bootstrap
-  - pip3 install flask-wtf
-  - pip3 install pillow
+  - pip3 install --upgrade pip
+  - pip3 install -r requirements.txt
 before_test:
   - chmod +x st.sh
 test_script:
