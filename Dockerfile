@@ -9,7 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Копируем весь код
 COPY . .
 
-# Даём права на выполнение st.sh (если будешь его использовать)
+# Даём права на выполнение st.sh
 RUN chmod +x st.sh
 
 # Открываем порт 5000

@@ -3,6 +3,7 @@ flask-wtf
 flask-bootstrap
 Pillow
 tensorflow
+matplotlib
 keras
 requests
 gunicorn

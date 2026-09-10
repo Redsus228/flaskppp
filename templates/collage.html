@@ -1,0 +1,59 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Склейка изображений и гистограммы{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<div class="container margin-top">
+    <h1 class="text-center">Инструмент обработки изображений</h1>
+    
+    <div class="row">
+        <!-- Форма загрузки -->
+        <div class="col-md-4">
+            <div class="card">
+                <h3>Параметры</h3>
+                <form method="POST" enctype="multipart/form-data" action="{{ url_for('collage_view') }}">
+                    {{ form.hidden_tag() }}
+                    {{ wtf.form_field(form.image1) }}
+                    {{ wtf.form_field(form.image2) }}
+                    {{ wtf.form_field(form.direction) }}
+                    {{ wtf.form_field(form.submit, class="btn btn-success btn-block") }}
+                </form>
+            </div>
+        </div>
+
+        <!-- Вывод результатов -->
+        <div class="col-md-8">
+            {% if result_image %}
+                <div class="card text-center">
+                    <h3>Результат склейки</h3>
+                    <img src="{{ url_for('static', filename='uploads/' + result_image) }}" class="img-responsive center-block res-img" alt="Результат">
+                </div>
+                
+                <div class="card">
+                    <h3>Гистограммы распределения цветов (RGB)</h3>
+                    <div class="row">
+                        <div class="col-sm-4 text-center">
+                            <p><b>Картинка 1</b></p>
+                            <img src="{{ url_for('static', filename='uploads/' + hist1) }}" class="img-responsive" alt="Гистограмма 1">
+                        </div>
+                        <div class="col-sm-4 text-center">
+                            <p><b>Картинка 2</b></p>
+                            <img src="{{ url_for('static', filename='uploads/' + hist2) }}" class="img-responsive" alt="Гистограмма 2">
+                        </div>
+                        <div class="col-sm-4 text-center">
+                            <p><b>Результат</b></p>
+                            <img src="{{ url_for('static', filename='uploads/' + hist_res) }}" class="img-responsive" alt="Гистограмма Результата">
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center">
+                    Загрузите два изображения, чтобы получить результат и графики цветов.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
