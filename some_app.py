@@ -6,9 +6,10 @@ from flask import Flask, render_template, redirect, url_for, session
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm, RecaptchaField
 from flask_wtf.file import FileField, FileAllowed, FileRequired
-from wtforms import SubmitField, RadioField
+from wtforms import SubmitField, RadioField, BooleanField
 from werkzeug.utils import secure_filename
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'super-secret-key-for-wtf'
@@ -44,6 +45,26 @@ class CollageForm(FlaskForm):
         ('vertical', 'По вертикали')
     ], default='horizontal')
     submit = SubmitField('Склеить и построить графики')
+    add_timestamp = BooleanField('Наложить маску с датой и временем создания')
+
+# наложение текста даты и времени внизу склееной фотографии
+def apply_text_mask(image, text_str):
+    watermark_layer = Image.new('RGBA', image.size, (0, 0, 0, 0))
+
+    rect_height = int(image.height * 0.08)
+    font_size = float(rect_height * 0.4)
+    padding = int(image.height * 0.02)
+    draw = ImageDraw.Draw(watermark_layer)
+    font = ImageFont.load_default(font_size)
+    rect_y1 = image.height - rect_height - padding
+    rect_y2 = image.height - padding
+
+    #Темная полупрозрачная подложка-маска с белым текстом
+    draw.rectangle([padding, rect_y1, image.width - padding, rect_y2], fill=(0, 0, 0, 150))
+    draw.text((padding + 15, rect_y1 + 12), text_str, fill=(255, 255, 255, 255), font=font)
+
+    combined = Image.alpha_composite(image.convert('RGBA'), watermark_layer)
+    return combined.convert('RGB')
 
 
 # Вспомогательная функция: генерация гистограммы цветов RGB
@@ -70,7 +91,7 @@ def generate_rgb_histogram(image_path, output_name):
 
 
 # Вспомогательная функция: склейка двух картинок
-def merge_images(img1_path, img2_path, direction):
+def merge_images(img1_path, img2_path, direction, add_timestamp_flag):
     img1 = Image.open(img1_path).convert('RGB')
     img2 = Image.open(img2_path).convert('RGB')
 
@@ -87,6 +108,9 @@ def merge_images(img1_path, img2_path, direction):
         combined.paste(img1, (0, 0))
         combined.paste(img2_resized, (0, img1.height))
 
+    if add_timestamp_flag:
+        time_str = datetime.now().strftime("Processed on: %Y-%m-%d %H:%M:%S")
+        combined = apply_text_mask(combined, time_str)
     res_name = 'result_collage.png'
     combined.save(os.path.join(UPLOAD_FOLDER, res_name))
     return res_name
@@ -119,9 +143,7 @@ def collage_view():
         path2 = os.path.join(UPLOAD_FOLDER, secure_filename(f2.filename))
         f1.save(path1)
         f2.save(path2)
-
-        result_image = merge_images(path1, path2, form.direction.data)
-
+        result_image = merge_images(path1, path2, form.direction.data, form.add_timestamp.data)
         hist1 = generate_rgb_histogram(path1, 'hist1.png')
         hist2 = generate_rgb_histogram(path2, 'hist2.png')
         hist_res = generate_rgb_histogram(os.path.join(UPLOAD_FOLDER, result_image), 'hist_res.png')
@@ -133,8 +155,8 @@ def collage_view():
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
 
-##############################################################################
-# СТАРЫЙ КОД (ЗАКОММЕНТИРОВАН, ЧТОБЫ НЕ ПОТЕРЯТЬ)
+
+
 ####################################################################
 # from flask import Flask
 # from flask import render_template
